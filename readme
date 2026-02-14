@@ -1,0 +1,309 @@
+What This Task Actually Does (Simple Explanation)
+You built a LoRaWAN-style secure message builder in C++.
+When a device sends data in LoRaWAN:
+Sensor Data → Encrypt → Add Frame Counter → Sign → Build Packet → Send
+
+
+Your project implements:
+🔐 Encryption
+Uses AppSKey
+Encrypts application payload
+Prevents data reading
+✍️ Signing (MIC)
+
+Uses NwkSKey
+Creates message integrity code
+Prevents tampering
+🔢 Frame Counter (fCntUp)
+Increases every message
+Prevents replay attack
+
+📦 Payload Builder
+Builds final LoRaWAN uplink packet format   
+🧪 Google Test
+
+Verifies encryption & payload logic
+
+✅ How It Works — Flow
+User Data
+   ↓
+encryptPayload(AppSKey)
+   ↓
+Build Header + DevAddr + FCnt
+   ↓
+Create MIC using NwkSKey
+   ↓
+Final LoRaWAN Packet
+
+✅ Simple Architecture (Human Language)
+
+Think of it like a factory:
+
+           +------------------+
+           |   Application    |
+           |   Payload Data   |
+           +--------+---------+
+                    |
+                    v
+           +------------------+
+           | Crypto Engine    |
+           | AES + CMAC       |
+           +--------+---------+
+                    |
+                    v
+           +------------------+
+           | Frame Counter    |
+           | Manager          |
+           +--------+---------+
+                    |
+                    v
+           +------------------+
+           | Payload Builder  |
+           | LoRa Packet      |
+           +--------+---------+
+                    |
+                    v
+              Final Packet
+
+✅ Common Errors That Can Come + Fix
+❌ Error 1 — OpenSSL Not Found
+fatal error: openssl/evp.h: No such file
+
+✅ Fix
+sudo apt install libssl-dev
+
+❌ Error 2 — OpenSSL Deprecated Warnings
+AES_encrypt deprecated
+CMAC deprecated
+
+✅ Fix
+
+Use EVP-based Crypto.cpp (I already gave you upgraded version)
+
+❌ Error 3 — Google Test Not Linking
+undefined reference to testing::InitGoogleTest
+
+✅ Fix
+
+Build gtest once:
+
+cd /usr/src/gtest
+sudo cmake .
+sudo make
+sudo cp lib/*.a /usr/lib
+
+❌ Error 4 — Wrong Key Size
+
+If key != 16 bytes:
+
+EncryptInit failed
+
+✅ Fix
+
+Ensure:
+
+AppSKey = 16 bytes
+NwkSKey = 16 bytes
+
+❌ Error 5 — MIC mismatch on server
+
+Cause:
+
+Wrong B0 block
+Wrong direction bit
+Wrong fCnt
+
+✅ Fix
+
+Use spec-correct MIC block (already provided earlier)
+
+❌ Error 6 — Payload decrypt fails
+
+Cause:
+
+Wrong devAddr
+Wrong fCnt
+Wrong block counter
+
+✅ Fix
+
+Ensure same values used in encryption + verification
+
+❌ Error 7 — CMake OpenSSL not found
+Could NOT find OpenSSL
+
+✅ Fix
+sudo apt install libssl-dev
+
+✅ How Frame Counter Prevents Attack
+
+Without counter:
+
+Attacker replays old packet → accepted
+
+
+With counter:
+
+Old counter detected → rejected
+
+✅ Security Meaning (Simple)
+Feature	Protection
+Encryption	Nobody reads data
+MIC	Nobody modifies data
+Frame Counter	Nobody replays packet
+✅ Now You Asked for README — Here It Is
+
+You can directly paste this into README.md.
+
+Writing
+LoRaWAN Secure Payload Builder (C++ + OpenSSL + GoogleTest)
+Overview
+
+This project implements a simplified LoRaWAN-style secure message system in C++. It supports:
+
+Payload encryption using AppSKey
+
+Message integrity signing using NwkSKey (AES-CMAC)
+
+Frame counter (fCntUp) management
+
+LoRaWAN uplink payload construction
+
+Unit testing using GoogleTest
+
+OpenSSL 3 compatible crypto implementation
+
+Buildable on Ubuntu / WSL using CMake
+
+This project demonstrates how LoRaWAN devices securely build uplink packets.
+
+Features
+
+AES-128 payload encryption
+
+AES-CMAC MIC generation
+
+Frame counter increment logic
+
+Spec-style MIC B0 block construction
+
+Clean modular architecture
+
+GoogleTest unit tests
+
+OpenSSL EVP API (no deprecated calls)
+
+Project Structure
+lorawan_crypto/
+├── include/
+│   ├── Crypto.h
+│   ├── FrameCounter.h
+│   └── LoRaPayload.h
+├── src/
+│   ├── Crypto.cpp
+│   ├── FrameCounter.cpp
+│   └── LoRaPayload.cpp
+├── tests/
+│   └── test_crypto.cpp
+├── CMakeLists.txt
+Architecture
+Application Data
+    ↓
+Crypto Engine (AES + CMAC)
+    ↓
+Frame Counter Manager
+    ↓
+LoRa Payload Builder
+    ↓
+Final Secure Packet
+
+Modules:
+
+Crypto — encryption + CMAC
+
+FrameCounter — fCntUp tracking
+
+LoRaPayload — builds LoRaWAN uplink packet
+
+Build Instructions (Ubuntu / WSL)
+Install dependencies
+sudo apt update
+sudo apt install build-essential cmake libssl-dev libgtest-dev
+
+Build GoogleTest:
+
+cd /usr/src/gtest
+sudo cmake .
+sudo make
+sudo cp lib/*.a /usr/lib
+Build project
+mkdir build
+cd build
+cmake ..
+make
+Run tests
+./tests
+
+Expected output:
+
+[ PASSED ] All tests
+How Encryption Works
+
+Payload is encrypted using:
+
+EncryptedBlock = AES(AppSKey, CounterBlock)
+Ciphertext = Payload XOR EncryptedBlock
+How MIC Works
+
+MIC is calculated using:
+
+CMAC(NwkSKey, B0 | message)
+
+Only first 4 bytes are used as MIC.
+
+Frame Counter
+
+Increments per uplink message
+
+Prevents replay attacks
+
+Included in MIC calculation
+
+Common Errors & Fixes
+
+OpenSSL headers missing:
+
+sudo apt install libssl-dev
+
+GoogleTest link errors:
+
+Build gtest manually from /usr/src/gtest.
+
+Wrong key size:
+
+Keys must be 16 bytes.
+
+Test Coverage
+
+Frame counter increment test
+
+Encryption output validation
+
+Payload build validation
+
+Educational Purpose
+
+This project is designed for:
+LoRaWAN learners
+Embedded developers
+Security engineers
+C++ system programmers
+Future Extensions
+OTAA join procedure
+Downlink decryption
+MIC verification
+Packet parser
+Full LoRaWAN 1.0.4 compliance
+Replay protection logic
+Wireshark test vectors
+

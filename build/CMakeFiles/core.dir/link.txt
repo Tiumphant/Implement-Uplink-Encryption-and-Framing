@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcore.a CMakeFiles/core.dir/src/Crypto.cpp.o CMakeFiles/core.dir/src/FrameCounter.cpp.o CMakeFiles/core.dir/src/LoRaPayload.cpp.o
+/usr/bin/ranlib libcore.a
